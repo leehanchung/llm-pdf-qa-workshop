@@ -66,7 +66,15 @@ Please implement the missing pieces in the [application](app/app.py)
 
 ### Lab 1: Solution
 
-✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app)
+2. We choose to use [langchain.document_loaders.PDFPlumberLoader](https://python.langchain.com/docs/modules/data_connection/document_loaders/how_to/pdf#using-pdfplumber) to load PDF files. It helps with PDF file metadata in the future. And we like Super Mario Brothers who are plumbers.
+3. We choose to use [langchain.text_splitter.RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter) to chunk the text into smaller documents.
+4. Any in-memory vector stores should be suitable for this application since we are only expecting one single PDF. Anything more is over engineering. We choose to use [Chroma](https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/chroma).
+5. We use [langchain.chains.RetrievalQAWithSourcesChain](https://python.langchain.com/docs/modules/chains/popular/vector_db_qa#return-source-documents) since it returns the sources, which helps the end users to access the source documents.
+
+The completed application has the following architecture:
+![final](assets/arch_final.png)
+
+Now we can [run the application](#run-the-application).
 
 ## Lab 2: Basic prompt engineering
 

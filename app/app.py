@@ -26,24 +26,28 @@ def process_file(*, file: AskFileResponse) -> list:
     if file.type != "application/pdf":
         raise TypeError("Only PDF files are supported")
     
+
     with NamedTemporaryFile() as tempfile:
         tempfile.write(file.content)
-        
+
         ######################################################################
         #
-        # TODO: 1. Load the PDF
+        # 1. Load the PDF
         #
         ######################################################################
-        loader = ...
+        loader = PDFPlumberLoader(tempfile.name)
         ######################################################################
         documents = loader.load()
 
         ######################################################################
         #
-        # TODO: 2. Split the text
+        # 2. Split the text
         #
         ######################################################################
-        text_splitter = ...
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=2000,
+            chunk_overlap=100
+        )
         ######################################################################
 
         docs = text_splitter.split_documents(documents)
@@ -56,15 +60,17 @@ def process_file(*, file: AskFileResponse) -> list:
 def create_search_engine(*, file: AskFileResponse) -> VectorStore:
     docs = process_file(file=file)
 
+    
     ##########################################################################
     #
-    # TODO: 3. Set the Encoder model for creating embeddings
+    # 3. Set the Encoder model for creating embeddings
     #
     ##########################################################################
-    
-    encoder = ...
+    encoder = OpenAIEmbeddings(
+        model="text-embedding-ada-002"
+    )
     ##########################################################################
-    
+
     # Save data in the user session
     cl.user_session.set("docs", docs)
 
@@ -77,12 +83,16 @@ def create_search_engine(*, file: AskFileResponse) -> VectorStore:
 
     ##########################################################################
     #
-    # TODO: 4. Create the document search engine. Remember to add 
+    # 4. Create the document search engine. Remember to add 
     # client_settings using the above settings.
     #
     ##########################################################################
-    
-    search_engine = ...
+    search_engine = Chroma.from_documents(
+        documents=docs,
+        embedding=encoder,
+        metadatas=[doc.metadata for doc in docs],
+        client_settings=client_settings 
+    )
     ##########################################################################
 
     return search_engine
@@ -116,10 +126,18 @@ async def chat() -> Chain:
 
     ##########################################################################
     #
-    # TODO: 5. Create the chain / tool for RetrievalQAWithSourcesChain.
+    # 5. Create the chain / tool for RetrievalQAWithSourcesChain.
     #
     ##########################################################################
-    chain = ...
+    chain = RetrievalQAWithSourcesChain.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=search_engine.as_retriever(max_tokens_limit=4097),
+        ######################################################################
+        # TODO: 6. Customize prompts to improve summarization and question
+        # answering performance. Perhaps create your own prompt in prompts.py?
+        ######################################################################
+    )
     ##########################################################################
 
     await msg.update(content=f"`{file.name}` processed. You can now ask questions!")
