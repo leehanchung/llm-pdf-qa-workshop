@@ -13,6 +13,10 @@ import chainlit as cl
 from chainlit.types import AskFileResponse
 from chromadb.config import Settings
 
+<<<<<<< HEAD
+from prompts import PROMPT, EXAMPLE_PROMPT
+=======
+>>>>>>> lab1/pdf-qa-app
 
 WELCOME_MESSAGE = """\
 Welcome to Introduction to LLM App Development Sample PDF QA Application!
@@ -134,9 +138,13 @@ async def chat() -> Chain:
         chain_type="stuff",
         retriever=search_engine.as_retriever(max_tokens_limit=4097),
         ######################################################################
-        # TODO: 6. Customize prompts to improve summarization and question
+        # 6. Customize prompts to improve summarization and question
         # answering performance. Perhaps create your own prompt in prompts.py?
         ######################################################################
+        chain_type_kwargs={
+            "prompt": PROMPT,
+            "document_prompt": EXAMPLE_PROMPT
+        },
     )
     ##########################################################################
 

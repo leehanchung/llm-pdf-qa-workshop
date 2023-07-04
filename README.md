@@ -96,7 +96,16 @@ Please resolve this hallucination problem with prompt engineering.
 
 ### Lab 2: Solution
 
-✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app-final)
+We utilized Chainlit's Prompt Playground functionality to experiment with the prompts. First, we investigates the prompts that includes the retrieved results. We found the correct operating margins is included. So the model is having a difficult time generating summaries using the right context.
+
+We found that if we remove the few shot examples implemented by Langchain, `gpt-3.5-turbo-0613` will be able to generate the right answer. However, it, for some reason, decided to change the sources into bullet points with summaries. We then experimented around and "fixed" the sources prompt.
+
+To implement the updated prompts in our application, we traced Langchain's Python source code. We found that `RetrievalQAWithSourcesChain` inherites from `BaseQAWithSourcesChain`, where it has a class method `from_chain_type()` that uses [`load_qa_with_sources_chain`](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/qa_with_sources/base.py#L81) to create the chain. The function maps the keyword `stuff` to use [_load_stuff_chain](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/qa_with_sources/loading.py#L52). We then found that [_load_stuff_chain](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/qa_with_sources/loading.py#L52) takes a `prompt` variable and a `document_prompt` variable to create a [StuffDocumentChain](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/combine_documents/stuff.py#L22) for doing the QA as a documentation summarization task.
+
+The composition of the overall prompt is as follows:
+![Alt text](assets/stuff_chain.png)
+
+We then extracted out [the prompts into their own file](app/prompts.py) and implements them there. We then initialize the `RetrievalQAWithSourcesChain` with our custom prompts!
 
 ## LICENSE
 
