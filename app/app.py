@@ -13,10 +13,7 @@ import chainlit as cl
 from chainlit.types import AskFileResponse
 from chromadb.config import Settings
 
-<<<<<<< HEAD
 from prompts import PROMPT, EXAMPLE_PROMPT
-=======
->>>>>>> lab1/pdf-qa-app
 
 WELCOME_MESSAGE = """\
 Welcome to Introduction to LLM App Development Sample PDF QA Application!
@@ -77,6 +74,9 @@ def create_search_engine(*, file: AskFileResponse) -> VectorStore:
 
     # Save data in the user session
     cl.user_session.set("docs", docs)
+
+    search_engine = Chroma(persist_directory=".chromadb")
+    search_engine._client.reset()
 
     client_settings = Settings(
         chroma_db_impl="duckdb+parquet",
