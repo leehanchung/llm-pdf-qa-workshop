@@ -1,6 +1,17 @@
 #!/bin/bash
 
-# do as little as possible in this script to keep the container creation fast.
-# for more specific devcontainer use cases use the different devcontainer subfolders.
+# strict mode bash script
+set -euo pipefail
+IFS=$'\n\t'
 
-echo "done"
+# allow git usage
+git config --global --add safe.directory "*"
+
+# install poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
+# create python virtual environment
+poetry install --no-root
+
+# start virtual environment
+poetry shell

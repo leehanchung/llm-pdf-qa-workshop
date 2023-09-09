@@ -1,12 +1,21 @@
 {
   "name": "llm-pdf-qa-workshop",
-  "image": "mcr.microsoft.com/vscode/devcontainers/universal",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "VARIANT": "3.10-bullseye",
+      "POETRY_VERSION": "1.6.1"
+    }
+  },
+  "remoteUser": "vscode",
   "features": {
     "ghcr.io/devcontainers-contrib/features/pre-commit:2": {
       "version": "latest"
     }
   },
   "mounts": [
+    // Re-use local git and ssh configurations
     "source=${env:HOME}/.gitconfig,target=/root/.gitconfig,type=bind",
     "source=${env:HOME}/.ssh,target=/root/.ssh,type=bind"
   ],
@@ -16,8 +25,10 @@
     "vscode": {
       "extensions": [
         "GitHub.copilot",
+        "esbenp.prettier-vscode",
+        "njpwerner.autodocstring",
         "ms-python.python",
-        "esbenp.prettier-vscode"
+        "ms-azuretools.vscode-docker"
       ]
     }
   }
