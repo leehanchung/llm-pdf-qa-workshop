@@ -1,3 +1,9 @@
+# Chroma compatibility issues, hacking per its documentation
+# https://docs.trychroma.com/troubleshooting#sqlite
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from tempfile import NamedTemporaryFile
 
 import chainlit as cl
@@ -12,6 +18,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.vectorstores.base import VectorStore
 from prompts import EXAMPLE_PROMPT, PROMPT
+
 
 WELCOME_MESSAGE = """\
 Welcome to Introduction to LLM App Development Sample PDF QA Application!
