@@ -1,19 +1,17 @@
 from tempfile import NamedTemporaryFile
 
-from langchain.document_loaders import PDFPlumberLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.vectorstores.base import VectorStore
-from langchain.chains import RetrievalQAWithSourcesChain
-from langchain.chains.base import Chain
-from langchain.chat_models import ChatOpenAI
-
 import chainlit as cl
 from chainlit.types import AskFileResponse
 from chromadb.config import Settings
-
-from prompts import PROMPT, EXAMPLE_PROMPT
+from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.chains.base import Chain
+from langchain.chat_models import ChatOpenAI
+from langchain.document_loaders import PDFPlumberLoader
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain.vectorstores.base import VectorStore
+from prompts import EXAMPLE_PROMPT, PROMPT
 
 WELCOME_MESSAGE = """\
 Welcome to Introduction to LLM App Development Sample PDF QA Application!
