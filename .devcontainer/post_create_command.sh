@@ -2,9 +2,9 @@
 set -euf -o pipefail
 IFS=$'\n\t'
 
-# install poetry
+# Install poetry
 curl -sSL https://install.python-poetry.org | python3 -
 
-# create python virtual environment
+# Create python virtual environment
 poetry install --no-root
 poetry shell
