@@ -4,10 +4,10 @@ This repository contains an introductory workshop for learning LLM Application D
 
 | Lab | Learning Objective | Problem | Solution |
 | --- | ------------------ | ------- | :------: |
-| 1   | Basic chat with data LLM App  | 🐒 [PDF Q&A Application](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/main) | ✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app) |
-| 2   | Basic prompt engineering      | 🐒 [Improving Q&A Factuality](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app) | ✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app-final) |
+| 1   | Basic chat with data LLM App  | 🐒 [PDF Q&A Application](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/begin) | ✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/end) |
+| 2   | Basic prompt engineering      | 🐒 [Improving Q&A Factuality](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab2/begin) | ✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab2/end) |
 
-To run the fully functional application, please checkout [Lab 2 Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app-final) branch and follow the [instruction to run the application](#run-the-application)
+To run the fully functional application, please checkout the [main](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/main) branch and follow the [instruction to run the application](#run-the-application)
 
 The app provides an chat interface that asks user to upload a PDF document and then allow users to ask questions against the PDF document. It uses OpenAI's API for the chat and embedding models, Langchain for the framework, and Chainlit as the fullstack interface.
 
