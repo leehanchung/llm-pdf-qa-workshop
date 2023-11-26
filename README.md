@@ -66,7 +66,15 @@ Please implement the missing pieces in the [application](app/app.py)
 
 ### Lab 1: Solution
 
-✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app)
+2. We choose to use [langchain.document_loaders.PDFPlumberLoader](https://python.langchain.com/docs/modules/data_connection/document_loaders/how_to/pdf#using-pdfplumber) to load PDF files. It helps with PDF file metadata in the future. And we like Super Mario Brothers who are plumbers.
+3. We choose to use [langchain.text_splitter.RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter) to chunk the text into smaller documents.
+4. Any in-memory vector stores should be suitable for this application since we are only expecting one single PDF. Anything more is over engineering. We choose to use [Chroma](https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/chroma).
+5. We use [langchain.chains.RetrievalQAWithSourcesChain](https://python.langchain.com/docs/modules/chains/popular/vector_db_qa#return-source-documents) since it returns the sources, which helps the end users to access the source documents.
+
+The completed application has the following architecture:
+![final](assets/arch_final.png)
+
+Now we can [run the application](#run-the-application).
 
 ## Lab 2: Basic prompt engineering
 
@@ -88,7 +96,16 @@ Please resolve this hallucination problem with prompt engineering.
 
 ### Lab 2: Solution
 
-✅ [Solution](https://github.com/leehanchung/llm-pdf-qa-workshop/tree/lab1/pdf-qa-app-final)
+We utilized Chainlit's Prompt Playground functionality to experiment with the prompts. First, we investigates the prompts that includes the retrieved results. We found the correct operating margins is included. So the model is having a difficult time generating summaries using the right context.
+
+We found that if we remove the few shot examples implemented by Langchain, `gpt-3.5-turbo-0613` will be able to generate the right answer. However, it, for some reason, decided to change the sources into bullet points with summaries. We then experimented around and "fixed" the sources prompt.
+
+To implement the updated prompts in our application, we traced Langchain's Python source code. We found that `RetrievalQAWithSourcesChain` inherites from `BaseQAWithSourcesChain`, where it has a class method `from_chain_type()` that uses [`load_qa_with_sources_chain`](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/qa_with_sources/base.py#L81) to create the chain. The function maps the keyword `stuff` to use [_load_stuff_chain](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/qa_with_sources/loading.py#L52). We then found that [_load_stuff_chain](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/qa_with_sources/loading.py#L52) takes a `prompt` variable and a `document_prompt` variable to create a [StuffDocumentChain](https://github.com/hwchase17/langchain/blob/b0859c9b185fe897f3c8e2699835a669b2a2ba61/langchain/chains/combine_documents/stuff.py#L22) for doing the QA as a documentation summarization task.
+
+The composition of the overall prompt is as follows:
+![Alt text](assets/stuff_chain.png)
+
+We then extracted out [the prompts into their own file](app/prompts.py) and implements them there. We then initialize the `RetrievalQAWithSourcesChain` with our custom prompts!
 
 ## LICENSE
 

@@ -1,0 +1,26 @@
+{
+  "name": "llm-pdf-qa-workshop",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.10-bullseye",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/pre-commit:2": {
+      "version": "latest"
+    }
+  },
+  "mounts": [
+    // Re-use local git and ssh configurations. On container its at /workspaces/vscode
+    "source=${env:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind",
+    "source=${env:HOME}/.ssh,target=/home/vscode/.ssh,type=bind"
+  ],
+  "postCreateCommand": ".devcontainer/post_create_command.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot",
+        "esbenp.prettier-vscode",
+        "njpwerner.autodocstring",
+        "ms-python.python",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}
