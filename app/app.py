@@ -3,17 +3,21 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+from typing import List
 
 from tempfile import NamedTemporaryFile
 
 import chainlit as cl
 from chainlit.types import AskFileResponse
+import chromadb
 from chromadb.config import Settings
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chains.base import Chain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import PDFPlumberLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.schema import Document
+from langchain.schema.embeddings import Embeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.vectorstores.base import VectorStore
@@ -28,10 +32,9 @@ To get started:
 """
 
 
-def process_file(*, file: AskFileResponse) -> list:
+def process_file(*, file: AskFileResponse) -> List[Document]:
     if file.type != "application/pdf":
         raise TypeError("Only PDF files are supported")
-    
 
     with NamedTemporaryFile() as tempfile:
         tempfile.write(file.content)
@@ -55,40 +58,34 @@ def process_file(*, file: AskFileResponse) -> list:
             chunk_overlap=100
         )
         ######################################################################
-
         docs = text_splitter.split_documents(documents)
 
         for i, doc in enumerate(docs):
             doc.metadata["source"] = f"source_{i}"
+
+        if not docs:
+            raise ValueError("PDF file parsing failed.")
+
         return docs
 
 
-def create_search_engine(*, file: AskFileResponse) -> VectorStore:
-    docs = process_file(file=file)
+def create_search_engine(*, docs: List[Document], embeddings: Embeddings) -> VectorStore:
 
-    
-    ##########################################################################
-    #
-    # 3. Set the Encoder model for creating embeddings
-    #
-    ##########################################################################
-    encoder = OpenAIEmbeddings(
-        model="text-embedding-ada-002"
-    )
-    ##########################################################################
-
-    # Save data in the user session
-    cl.user_session.set("docs", docs)
-
-    search_engine = Chroma(persist_directory=".chromadb")
-    search_engine._client.reset()
-
+    # Initialize Chromadb client to enable resetting and disable telemtry
+    client = chromadb.EphemeralClient()
     client_settings = Settings(
         chroma_db_impl="duckdb+parquet",
         anonymized_telemetry=False,
         persist_directory=".chromadb",
-        allow_reset=True
+        allow_reset=True    )
+
+    # Reset the search engine to ensure we don't use old copies.
+    # NOTE: we do not need this for production
+    search_engine = Chroma(
+        client=client,
+        client_settings=client_settings
     )
+    search_engine._client.reset()
 
     ##########################################################################
     #
@@ -97,9 +94,9 @@ def create_search_engine(*, file: AskFileResponse) -> VectorStore:
     #
     ##########################################################################
     search_engine = Chroma.from_documents(
+        client=client,
         documents=docs,
-        embedding=encoder,
-        metadatas=[doc.metadata for doc in docs],
+        embedding=embeddings,
         client_settings=client_settings 
     )
     ##########################################################################
@@ -107,9 +104,10 @@ def create_search_engine(*, file: AskFileResponse) -> VectorStore:
     return search_engine
 
 
-@cl.langchain_factory(use_async=True)
-async def chat() -> Chain:
+@cl.on_chat_start
+async def on_chat_start():
 
+    # Asking user to to upload a PDF to chat with
     files = None
     while files is None:
         files = await cl.AskFileMessage(
@@ -117,15 +115,35 @@ async def chat() -> Chain:
             accept=["application/pdf"],
             max_size_mb=20,
         ).send()
-  
     file = files[0]
+
+    # Process and save data in the user session
     msg = cl.Message(content=f"Processing `{file.name}`...")
     await msg.send()
-
+    docs = process_file(file=file)
+    cl.user_session.set("docs", docs)
+    msg.content = f"`{file.name}` processed. Loading ..."
+    await msg.update()
+    
+    ##########################################################################
+    #
+    # 3. Set the Encoder model for creating embeddings
+    #
+    ##########################################################################
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-ada-002"
+    )
+    ##########################################################################
     try:
-        search_engine = await cl.make_async(create_search_engine)(file=file)
+        search_engine = await cl.make_async(create_search_engine)(
+            docs=docs,
+            embeddings=embeddings
+        )
     except Exception as e:
         await cl.Message(content=f"Error: {e}").send()
+        raise SystemError
+    msg.content = f"`{file.name}` loaded. You can now ask questions!"
+    await msg.update()
 
     llm = ChatOpenAI(
         model='gpt-3.5-turbo-16k-0613',
@@ -153,15 +171,20 @@ async def chat() -> Chain:
     )
     ##########################################################################
 
-    await msg.update(content=f"`{file.name}` processed. You can now ask questions!")
-
-    return chain
+    cl.user_session.set("chain", chain)
 
 
-@cl.langchain_postprocess
-async def process_response(res):
-    answer = res["answer"]
-    sources = res["sources"].strip()
+@cl.on_message
+async def main(message: cl.Message):
+
+    chain = cl.user_session.get("chain")  # type: RetrievalQAWithSourcesChain
+    response = await chain.acall(
+        message.content,
+        callbacks=[cl.AsyncLangchainCallbackHandler(stream_final_answer=True)]
+    )
+
+    answer = response["answer"]
+    sources = response["sources"].strip()
     source_elements = []
 
     # Get the documents from the user session
