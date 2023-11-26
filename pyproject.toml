@@ -38,6 +38,7 @@ select = [
     "F",  # see: https://pypi.org/project/pyflakes
 ]
 ignore = [
+    "E402",  # Module level import not at top of file, due to Chroma hacks
     "E501",
     "E731",
     "E741",  # Ambiguous variable name: ...
